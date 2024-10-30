@@ -1,54 +1,63 @@
-## A Local Knowledge Base Augmented LLM able to serve millions of users, on top of llama index, fastapi and MongoDB
+# FastLlama: Local Knowledge Base Augmented LLM
 
-<img src="./imgs/system_architecture.png" alt="pic" width="1000"/>
+This project leverages a Local Knowledge Base augmented with a Language Model (LLM) to provide scalable question-answering capabilities for millions of users. Built on top of **LlamaIndex**, **FastAPI**, and **MongoDB**, the system supports two operational modes: Question Answering and Chatbot.
 
-there are 2 modes: question answering mode and chatbot mode.
+![System Architecture](./imgs/system_architecture.png)
 
-### question answering mode
+## Modes of Operation
 
-- local knowledge base origins from a csv file of standard question/answer pairs. the standard questions are embedded(
-  vectorized) by llama index when first run; while the standard answers are stored in MongoDB. the questions and answers
-  are intended to be decoupled and saved in different places
-- if user asks a question, query engine will try to find a matched question from local database, and if found, the bot
-  will then query MongoDB to get the answer
-- if no good matches found, the bot then call openAI's chatgpt api to get the answer, and insert the question into the
-  index. so next time the bot will be able to answer a similar question from local database
-- if the question is not relevant to the topic(in our case the topic is Golf), the bot will refuse to answer
+### 1. Question Answering Mode
 
-### chatbot mode
+In this mode, the bot utilizes a local knowledge base sourced from a CSV file containing standard question/answer pairs. The operational flow is as follows:
 
-- currently in development. the bot will be allowed to answer any questions, not necessarily limited to the topic. the
-  bot will be able to extract information from chat history
+- **Data Ingestion**: Upon the first execution, the CSV file is ingested. Standard questions are vectorized using **LlamaIndex**, which serves as the embedding engine. Standard answers are stored in **MongoDB**. This decoupling allows for flexibility and efficient data retrieval.
+  
+- **Query Processing**: When a user poses a question:
+  - The query engine searches for a matching question in the local database. If a match is found, the corresponding answer is retrieved from MongoDB.
+  - If no suitable match exists, the bot queries OpenAI's ChatGPT API to obtain an answer and stores the new question in the index for future reference.
+  
+- **Relevance Check**: If the question does not pertain to the designated topic (in this implementation, Golf), the bot will decline to provide an answer.
 
-#### When asking a question in the knowledge base
+### 2. Chatbot Mode
 
-<img src="./imgs/question_answering_demo_1.png" alt="pic" width="1500"/>
+Currently under development, the Chatbot Mode aims to allow the bot to respond to a broader range of questions, irrespective of the specific topic. It will also enable the extraction of relevant information from chat history.
 
-#### When asking a question which is not relevant to the topic
+#### Interaction Examples
 
-<img src="./imgs/question_answering_demo_2.png" alt="pic" width="600"/>
+- **Knowledge Base Interaction**  
+  ![Question Answering Demo](./imgs/question_answering_demo_1.png)
 
-## More backgrounds
+- **Irrelevant Question Handling**  
+  ![Irrelevant Question Demo](./imgs/question_answering_demo_2.png)
 
-- the bot uses fastapi as the web framework, llama index as the search engine, MongoDB as the metadata storage
-- during the first run, csv file is ingested and the questions are embedded by llama index as vector store, and the
-  answers and other metadata are stored in MongoDB
-- the bot uses https://api.openai.com/v1/embeddings for embedding. it is very cheap and with high performance
-- the bot uses https://api.openai.com/v1/chat/completions to ask chatgpt for answers. by default gpt-3.5-turbo is used
-  as the model
-- concurrency is naturally supported
+## System Architecture Overview
 
-## Next steps
+The bot operates within a robust architecture comprising:
 
-- use openAI's Assistant API as the search engine(I've already tried, but it is not as good as llama index at the
-  moment)
-- more test cases
+- **FastAPI**: The chosen web framework, providing high performance and asynchronous capabilities.
+- **LlamaIndex**: Serves as the search engine, facilitating efficient vector embeddings.
+- **MongoDB**: Utilized for metadata storage, ensuring quick retrieval of answers.
 
-## Development
+### Technical Implementation
 
-- Setup Environment
+- **Embedding Process**: Utilizes the OpenAI API at `https://api.openai.com/v1/embeddings` for high-performance embeddings. The process is both cost-effective and efficient.
+  
+- **Answer Retrieval**: Queries OpenAI's ChatGPT for answers via `https://api.openai.com/v1/chat/completions`, defaulting to the `gpt-3.5-turbo` model for its response generation.
 
-```shell
+- **Concurrency Support**: The system is designed to handle concurrent requests natively, ensuring scalability for multiple users.
+
+## Future Enhancements
+
+- Integrate OpenAI's Assistant API as a potential alternative search engine (current trials indicate that LlamaIndex outperforms it at this time).
+- Develop additional test cases to enhance reliability and performance.
+
+## Development Instructions
+
+### Environment Setup
+
+To set up the development environment, follow these steps:
+
+```bash
 export OPENAI_API_KEY=your_openai_api_key 
 pyenv install 3.11.8 
 virtualenv -p python3.11 env
@@ -56,20 +65,33 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-- Unit test
+### Running Unit Tests
 
-```shell
+Execute the following command to run unit tests:
+
+```bash
 pytest -ss
 ```
 
-- Start the server
+### Starting the Server
 
-```shell
+To start the FastAPI server, use:
+
+```bash
 uvicorn app.main:app --host 127.0.0.1 --port 8081
+# Alternatively, run with:
 # PYTHONPATH=. python app/main.py 8082
 ```
 
-- [Api doc](http://127.0.0.1:8081/docs)
+### API Documentation
+
+Access the automatically generated API documentation at:
+
+```plaintext
+http://127.0.0.1:8081/docs
+```
+
+To generate OpenAPI documentation, use:
 
 ```bash
 PYTHONPATH=. python app/utils/api-docs/extract_openapi.py app.main:app --out openapi.yaml
@@ -77,11 +99,12 @@ python app/utils/api-docs/swagger_html.py < openapi.yaml > swagger.html
 python app/utils/api-docs/redoc_html.py < openapi.yaml > redoc.html
 ```
 
-- Test cases(for local tests)
-    - write test cases in /app/tests/test_*.py
-    - need to pass local test cases before commit
+### Local Testing Guidelines
 
-## Reference
+- Write test cases in files located at `/app/tests/test_*.py`.
+- Ensure all local test cases pass before committing any changes.
 
-- [llama index official demo doc: fullstack_app_guide](https://docs.llamaindex.ai/en/stable/understanding/putting_it_all_together/apps/fullstack_app_guide.html)
-- [llama index official demo code: flask_react](https://github.com/logan-markewich/llama_index_starter_pack/tree/main/flask_react)
+## References
+
+- [LlamaIndex Official Documentation: Fullstack App Guide](https://docs.llamaindex.ai/en/stable/understanding/putting_it_all_together/apps/fullstack_app_guide.html)
+- [LlamaIndex Official Demo Code: Flask + React](https://github.com/logan-markewich/llama_index_starter_pack/tree/main/flask_react)
